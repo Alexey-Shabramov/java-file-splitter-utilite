@@ -1,6 +1,7 @@
-package file.splitter.util;
+package searcher.util;
 
 import javafx.scene.control.Alert;
+import searcher.dict.Constants;
 
 import java.util.List;
 
@@ -26,14 +27,6 @@ public class AlertGuiUtil {
         alert.setTitle(Constants.ERROR_TITLE);
         alert.setHeaderText(Constants.ERROR_HEADER);
         alert.setContentText(error);
-        alert.showAndWait();
-    }
-
-    public static void createSuccessAlert(String mainText) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(Constants.OPERATION_SUCCESSFULL_TITLE);
-        alert.setHeaderText(Constants.OPERATION_SUCCESSFULL_HEADER);
-        alert.setContentText(mainText);
         alert.showAndWait();
     }
 }
