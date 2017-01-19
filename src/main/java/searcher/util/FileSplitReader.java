@@ -25,7 +25,7 @@ public class FileSplitReader {
 
     private static List<Long> splitStepsList = new ArrayList<>();
     private static Long currentPosition = 0L;
-    private static Long stepsCounter = 1L;
+    private static long stepsCounter = 1L;
 
     private static List<Byte> foundedValueList = new LinkedList<>();
 
@@ -52,8 +52,18 @@ public class FileSplitReader {
 
         MappedByteBuffer buffer = null;
         for (Long step : splitStepsList) {
+            try {
+                if (FileBytesSplitterApp.interrupted) {
+                    break;
+                }
+            } finally {
+                FileBytesSplitterApp.interrupted = false;
+            }
             FileChannel fileChannel = randomAccessFile.getChannel();
-            Platform.runLater(() -> FileBytesSplitterApp.loggerTextArea.appendText(Constants.LOGGER_FILE_CHECK_PROCEED + stepsCounter));
+            Platform.runLater(() -> {
+                FileBytesSplitterApp.loggerTextArea.appendText(Constants.LOGGER_FILE_CHECK_PROCEED + stepsCounter);
+                ++stepsCounter;
+            });
             buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, currentPosition, step);
             for (int i = 0; i < buffer.limit(); i++) {
                 byte value = buffer.get();
@@ -86,7 +96,6 @@ public class FileSplitReader {
                     }
                 }
                 ++currentPosition;
-                ++stepsCounter;
             }
             buffer.rewind();
         }

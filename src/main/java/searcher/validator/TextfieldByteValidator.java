@@ -7,7 +7,6 @@ import java.util.List;
 
 public class TextfieldByteValidator {
 
-
     public static List<String> validateStringToStrictInput(String regExString, List<String> errorList) throws Exception {
         if (regExString.length() % 2 != 0) {
             errorList.add(Constants.CHECK_BOX_STRICT_INCORRECT_LENGTH);

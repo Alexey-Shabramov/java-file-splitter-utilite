@@ -21,6 +21,12 @@ import java.util.Map;
 
 public class FileBytesSplitterApp extends Application {
     public static TextArea loggerTextArea;
+    public static boolean interrupted = false;
+    private static Button resultDirectoryChooser;
+    private static TextField regExTextField;
+    private static CheckBox strictInputCheckBox;
+    private static Button btnBeginConvertation;
+    private static Button btnOpenFileChooser;
     private static File chosenFile;
     private static File selectedResultsDirectory;
     private static List<String> errorList = new ArrayList<>();
@@ -30,10 +36,28 @@ public class FileBytesSplitterApp extends Application {
         launch(args);
     }
 
+    private static void blockUI() {
+        Platform.runLater(() -> {
+            resultDirectoryChooser.setDisable(true);
+            regExTextField.setDisable(true);
+            btnOpenFileChooser.setDisable(true);
+            strictInputCheckBox.setDisable(true);
+        });
+    }
+
+    private static void unblockUI() {
+        Platform.runLater(() -> {
+            resultDirectoryChooser.setDisable(false);
+            btnOpenFileChooser.setDisable(false);
+            regExTextField.setDisable(false);
+            strictInputCheckBox.setDisable(false);
+        });
+    }
+
     @Override
     public void start(final Stage primaryStage) {
         final Label labelSelectedFile = new Label();
-        Button btnOpenFileChooser = new Button();
+        btnOpenFileChooser = new Button();
         btnOpenFileChooser.setText(Constants.CHOOSE_FILE);
 
         final Label emptyLabel = new Label();
@@ -43,16 +67,16 @@ public class FileBytesSplitterApp extends Application {
         final Label emptyLabel4 = new Label();
 
         final Label resultDirectoryLabel = new Label();
-        Button resultDirectoryChooser = new Button();
+        resultDirectoryChooser = new Button();
         resultDirectoryChooser.setText(Constants.CHOOSE_RESULT_FOLDER);
 
         final Label regExLabel = new Label();
-        TextField regExTextField = new TextField();
+        regExTextField = new TextField();
         regExLabel.setText(Constants.REG_EX_VALUE);
 
-        CheckBox strictInputCheckBox = new CheckBox(Constants.CHECK_BOX_STRICT_INPUT);
+        strictInputCheckBox = new CheckBox(Constants.CHECK_BOX_STRICT_INPUT);
 
-        Button btnBeginConvertation = new Button();
+        btnBeginConvertation = new Button();
         btnBeginConvertation.setText(Constants.BEGIN_CONVERTATION);
 
         final Label loggerLabel = new Label();
@@ -91,75 +115,84 @@ public class FileBytesSplitterApp extends Application {
         });
 
         btnBeginConvertation.setOnAction(event -> {
-            if (chosenFile == null) {
-                errorList.add(Constants.ERROR_NO_FILE);
-            }
-            if (selectedResultsDirectory == null) {
-                errorList.add(Constants.ERROR_RESULT_FOLDER_NOT_SET);
-            }
-            if (regExTextField.getText() == null || "".equals(regExTextField.getText())) {
-                errorList.add(Constants.ERROR_REGEX_FIELD_EMPTY);
-            } else if (regExTextField.getText().length() < 2) {
-                errorList.add(Constants.ERROR_REGEX_FIELD_LENGTH_SMALL);
-            } else try {
-                if (!TextfieldByteValidator.validateStringToStrictInput(regExTextField.getText(), errorList).isEmpty()) {
-                    errorList.add(Constants.ERROR_REGEX_FIELD_LENGTH_SMALL);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (!errorList.isEmpty()) {
-                AlertGuiUtil.prepareAlertMessage(errorList);
+            if (Constants.CANCEL_BUTTON.equals(btnBeginConvertation.getText())) {
+                interrupted = true;
+                thread.interrupt();
+                btnBeginConvertation.setText(Constants.BEGIN_CONVERTATION);
+                unblockUI();
             } else {
-                try {
-                    thread = new Thread(() -> {
-                        try {
-                            byte[] regExSelectedValue;
-                            if (strictInputCheckBox.isSelected() && TextfieldByteValidator.validateStringToStrictInput(regExTextField.getText(), errorList).isEmpty()) {
-                                regExSelectedValue = HexConverterUtil.toByteArray(regExTextField.getText());
-                            } else {
-                                regExSelectedValue = regExTextField.getText().getBytes();
-                            }
-                            btnBeginConvertation.setDisable(true);
-                            resultDirectoryChooser.setDisable(true);
-                            regExTextField.setDisable(true);
-                            btnOpenFileChooser.setDisable(true);
-                            Map<Long, Long> map = FileSplitReader.readByteParts(chosenFile, regExSelectedValue);
-                            if (!map.isEmpty()) {
-                                if (map.size() <= 200) {
-                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_FOUNDED_VALUES_COUNT + map.size()));
-                                    for (Map.Entry entry : map.entrySet()) {
-                                        Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_EQUALITY_FOUND_FIRST_INDEX + entry.getKey() + Constants.LOGGER_EQUALITY_FOUND_LAST_INDEX + entry.getValue()));
-                                    }
-                                } else {
-                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_OUTPUT_IS_TO_BIG + map.size()));
-                                }
-                                FileUtil.saveResultAsFile(map, selectedResultsDirectory, chosenFile);
-                                Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_CHECK_IS_OVER));
-
-                                FileSplitter.splitIntoMultiple(chosenFile, selectedResultsDirectory, map, regExSelectedValue);
-                                Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SPLITTING_IS_OVER));
-                            } else {
-                                Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_NO_EQUALITY_FOUND));
-                            }
-                        } catch (Exception e) {
-                            Platform.runLater(() -> {
-                                loggerTextArea.appendText(Constants.ERROR_HEADER + e);
-                                AlertGuiUtil.createAlert(Constants.ERROR_HEADER + e);
-                                e.printStackTrace();
-                            });
-                        } finally {
-                            FileSplitReader.resultsValues.clear();
-                            btnBeginConvertation.setDisable(false);
-                            resultDirectoryChooser.setDisable(false);
-                            btnOpenFileChooser.setDisable(false);
-                            regExTextField.setDisable(false);
+                if (chosenFile == null) {
+                    errorList.add(Constants.ERROR_NO_FILE);
+                }
+                if (selectedResultsDirectory == null) {
+                    errorList.add(Constants.ERROR_RESULT_FOLDER_NOT_SET);
+                }
+                if (strictInputCheckBox.isSelected()) {
+                    if (regExTextField.getText() == null || "".equals(regExTextField.getText())) {
+                        errorList.add(Constants.ERROR_REGEX_FIELD_EMPTY);
+                    } else if (regExTextField.getText().length() < 2) {
+                        errorList.add(Constants.ERROR_REGEX_FIELD_LENGTH_SMALL);
+                    } else try {
+                        if (!TextfieldByteValidator.validateStringToStrictInput(regExTextField.getText(), errorList).isEmpty()) {
+                            errorList.add(Constants.ERROR_REGEX_FIELD_LENGTH_SMALL);
                         }
-                        thread.interrupt();
-                    });
-                    thread.start();
-                } catch (Exception e) {
-                    AlertGuiUtil.createAlert(Constants.ERROR_HEADER + e);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (!errorList.isEmpty()) {
+                    AlertGuiUtil.prepareAlertMessage(errorList);
+                } else {
+                    btnBeginConvertation.setText(Constants.CANCEL_BUTTON);
+                    try {
+                        thread = new Thread(() -> {
+                            try {
+                                byte[] regExSelectedValue;
+                                if (strictInputCheckBox.isSelected() && TextfieldByteValidator.validateStringToStrictInput(regExTextField.getText(), errorList).isEmpty()) {
+                                    regExSelectedValue = HexConverterUtil.toByteArray(regExTextField.getText());
+                                } else {
+                                    regExSelectedValue = regExTextField.getText().getBytes();
+                                }
+                                blockUI();
+                                Map<Long, Long> map = FileSplitReader.readByteParts(chosenFile, regExSelectedValue);
+                                if (!map.isEmpty()) {
+                                    if (map.size() <= 200) {
+                                        Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_FOUNDED_VALUES_COUNT + map.size()));
+                                        for (Map.Entry entry : map.entrySet()) {
+                                            Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_EQUALITY_FOUND_FIRST_INDEX + entry.getKey() + Constants.LOGGER_EQUALITY_FOUND_LAST_INDEX + entry.getValue()));
+                                        }
+                                    } else {
+                                        Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_OUTPUT_IS_TO_BIG + map.size()));
+                                    }
+                                    FileUtil.saveResultAsFile(map, selectedResultsDirectory, chosenFile);
+                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_CHECK_IS_OVER));
+
+                                    FileSplitter.splitIntoMultiple(chosenFile, selectedResultsDirectory, map, regExSelectedValue);
+                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SPLITTING_IS_OVER));
+                                } else {
+                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_NO_EQUALITY_FOUND));
+                                }
+                            } catch (Exception e) {
+                                Platform.runLater(() -> {
+                                    btnBeginConvertation.setText(Constants.BEGIN_CONVERTATION);
+
+                                    loggerTextArea.appendText(Constants.ERROR_HEADER + e);
+                                    AlertGuiUtil.createAlert(Constants.ERROR_HEADER + e);
+                                    e.printStackTrace();
+                                });
+                            } finally {
+                                FileSplitReader.resultsValues.clear();
+                                unblockUI();
+                            }
+                            thread.interrupt();
+                        });
+                        thread.start();
+                    } catch (Exception e) {
+                        Platform.runLater(() -> {
+                            AlertGuiUtil.createAlert(Constants.ERROR_HEADER + e);
+                        });
+                        unblockUI();
+                    }
                 }
             }
         });

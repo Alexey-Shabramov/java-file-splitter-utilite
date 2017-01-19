@@ -22,6 +22,13 @@ public class FileSplitter {
         List<Long> resultIndexes = new ArrayList<>(resultsMap.keySet());
         int fileCounter = 0;
         for (int index = 0; index < resultIndexes.size(); index++) {
+            try {
+                if (FileBytesSplitterApp.interrupted) {
+                    break;
+                }
+            } finally {
+                FileBytesSplitterApp.interrupted = false;
+            }
             BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(selectedDirectory + "\\" + fileCounter + extension, true));
             Long currentValue;
             if (index == 0) {
@@ -30,23 +37,23 @@ public class FileSplitter {
                 currentValue = resultIndexes.get(index);
             }
             raf.seek(currentValue);
-            int bytesPerSplit;
+            long bytesPerSplit;
             if (resultIndexes.indexOf(currentValue) < (resultIndexes.size() - 1)) {
                 if (resultIndexes.size() > 1) {
                     if (currentValue == 0) {
-                        bytesPerSplit = (int) (resultIndexes.get(index) - currentValue);
+                        bytesPerSplit = resultIndexes.get(index) - currentValue;
                     } else {
-                        bytesPerSplit = (int) (resultIndexes.get(index + 1) - currentValue);
+                        bytesPerSplit = resultIndexes.get(index + 1) - currentValue;
                     }
                 } else {
                     bytesPerSplit = resultIndexes.get(index).intValue() - currentValue.intValue();
                 }
             } else {
-                bytesPerSplit = (int) (file.length() - currentValue.intValue());
+                bytesPerSplit = file.length() - currentValue.intValue();
             }
             if (bytesPerSplit > maxReadBufferSize) {
                 long numReads = bytesPerSplit / maxReadBufferSize;
-                int numRemainingRead = bytesPerSplit % maxReadBufferSize;
+                long numRemainingRead = bytesPerSplit % maxReadBufferSize;
                 for (int i = 0; i < numReads; i++) {
                     readWrite(raf, bw, maxReadBufferSize);
                 }
@@ -61,11 +68,11 @@ public class FileSplitter {
                     && !FileValidator.validateFileBeginSymbols(regExValue, readBeginOfFile(raf, regExValue.length))) {
                 ++fileCounter;
                 BufferedOutputStream bwForOne = new BufferedOutputStream(new FileOutputStream(selectedDirectory + "\\" + fileCounter + extension, true));
-                bytesPerSplit = (int) (file.length() - resultIndexes.get(0));
+                bytesPerSplit = file.length() - resultIndexes.get(0);
                 raf.seek(resultIndexes.get(0));
                 if (bytesPerSplit > maxReadBufferSize) {
                     long numReads = bytesPerSplit / maxReadBufferSize;
-                    int numRemainingRead = bytesPerSplit % maxReadBufferSize;
+                    long numRemainingRead = bytesPerSplit % maxReadBufferSize;
                     for (int i = 0; i < numReads; i++) {
                         readWrite(raf, bwForOne, maxReadBufferSize);
                     }
@@ -90,12 +97,37 @@ public class FileSplitter {
         return buf;
     }
 
-    private static void readWrite(RandomAccessFile raf, BufferedOutputStream bw, int length) throws IOException {
-        byte[] buf = new byte[length];
-        int val = raf.read(buf);
-        if (val != -1) {
-            bw.write(buf);
+    private static void readWrite(RandomAccessFile raf, BufferedOutputStream bw, long length) throws IOException {
+        byte[][] fileParts;
+        if (length > Integer.MAX_VALUE) {
+            int numParts = (int) (length / Integer.MAX_VALUE);
+            int numRemainingPart = (int) (length % Integer.MAX_VALUE);
+            fileParts = new byte[numParts + numRemainingPart][];
+            for (int i = 0; i < numParts + numRemainingPart; i++) {
+                fileParts[i] = new byte[(int) length];
+            }
+            int lastValueIndex = fileParts.length - 1;
+            for (int r = 0; r < fileParts.length; r++) {
+                if (lastValueIndex == r) {
+                    fileParts[r] = new byte[numRemainingPart];
+                } else {
+                    fileParts[r] = new byte[Integer.MAX_VALUE];
+                }
+                fileParts[r] = new byte[(int) length];
+            }
+        } else {
+            fileParts = new byte[][]{new byte[(int) length]};
         }
+        Platform.runLater(() -> {
+            FileBytesSplitterApp.loggerTextArea.appendText(Constants.LOGGER_FILE_SPLIT_PART);
+        });
+        for (byte[] array : fileParts) {
+            int val = raf.read(array);
+            if (val != -1) {
+                bw.write(array);
+            }
+        }
+        fileParts = null;
     }
 
     private static String getExtension(File file) {
