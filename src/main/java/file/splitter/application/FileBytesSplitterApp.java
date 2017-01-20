@@ -1,6 +1,9 @@
-package searcher.application;
+package file.splitter.application;
 
 
+import file.splitter.dict.Constants;
+import file.splitter.util.*;
+import file.splitter.validator.TextfieldByteValidator;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -10,9 +13,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import searcher.dict.Constants;
-import searcher.util.*;
-import searcher.validator.TextfieldByteValidator;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,6 +25,7 @@ public class FileBytesSplitterApp extends Application {
     private static Button resultDirectoryChooser;
     private static TextField regExTextField;
     private static CheckBox strictInputCheckBox;
+    private static CheckBox spliteFilesCheckBox;
     private static Button btnBeginConvertation;
     private static Button btnOpenFileChooser;
     private static File chosenFile;
@@ -39,6 +40,7 @@ public class FileBytesSplitterApp extends Application {
     private static void blockUI() {
         Platform.runLater(() -> {
             resultDirectoryChooser.setDisable(true);
+            spliteFilesCheckBox.setDisable(true);
             regExTextField.setDisable(true);
             btnOpenFileChooser.setDisable(true);
             strictInputCheckBox.setDisable(true);
@@ -48,6 +50,7 @@ public class FileBytesSplitterApp extends Application {
     private static void unblockUI() {
         Platform.runLater(() -> {
             resultDirectoryChooser.setDisable(false);
+            spliteFilesCheckBox.setDisable(false);
             btnOpenFileChooser.setDisable(false);
             regExTextField.setDisable(false);
             strictInputCheckBox.setDisable(false);
@@ -65,6 +68,8 @@ public class FileBytesSplitterApp extends Application {
         final Label emptyLabel2 = new Label();
         final Label emptyLabel3 = new Label();
         final Label emptyLabel4 = new Label();
+        final Label emptyLabel5 = new Label();
+        final Label emptyLabel6 = new Label();
 
         final Label resultDirectoryLabel = new Label();
         resultDirectoryChooser = new Button();
@@ -75,6 +80,8 @@ public class FileBytesSplitterApp extends Application {
         regExLabel.setText(Constants.REG_EX_VALUE);
 
         strictInputCheckBox = new CheckBox(Constants.CHECK_BOX_STRICT_INPUT);
+
+        spliteFilesCheckBox = new CheckBox(Constants.CHECK_BOX_SPLIT);
 
         btnBeginConvertation = new Button();
         btnBeginConvertation.setText(Constants.BEGIN_CONVERTATION);
@@ -164,25 +171,31 @@ public class FileBytesSplitterApp extends Application {
                                     } else {
                                         Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_OUTPUT_IS_TO_BIG + map.size()));
                                     }
-                                    FileUtil.saveResultAsFile(map, selectedResultsDirectory, chosenFile);
-                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_CHECK_IS_OVER));
+                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SEARCH_IS_OVER));
+                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SAVE_RESULT + map.size()));
 
-                                    FileSplitter.splitIntoMultiple(chosenFile, selectedResultsDirectory, map, regExSelectedValue);
-                                    Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SPLITTING_IS_OVER));
+                                    FileUtil.saveResultAsFile(map, selectedResultsDirectory, chosenFile);
+                                    if (spliteFilesCheckBox.isSelected()) {
+                                        FileSplitter.splitIntoMultiple(chosenFile, selectedResultsDirectory, map, regExSelectedValue);
+                                        Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SPLITTING_IS_OVER));
+                                    }
                                 } else {
                                     Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_NO_EQUALITY_FOUND));
                                 }
                             } catch (Exception e) {
                                 Platform.runLater(() -> {
-                                    btnBeginConvertation.setText(Constants.BEGIN_CONVERTATION);
-
                                     loggerTextArea.appendText(Constants.ERROR_HEADER + e);
                                     AlertGuiUtil.createAlert(Constants.ERROR_HEADER + e);
                                     e.printStackTrace();
                                 });
+                                Platform.runLater(() -> loggerTextArea.appendText(Constants.LOGGER_SEARCH_IS_OVER));
+
                             } finally {
                                 FileSplitReader.resultsValues.clear();
                                 unblockUI();
+                                Platform.runLater(() -> {
+                                    btnBeginConvertation.setText(Constants.BEGIN_CONVERTATION);
+                                });
                             }
                             thread.interrupt();
                         });
@@ -206,7 +219,10 @@ public class FileBytesSplitterApp extends Application {
                 emptyLabel1,
                 regExLabel,
                 regExTextField,
+                emptyLabel6,
                 strictInputCheckBox,
+                emptyLabel5,
+                spliteFilesCheckBox,
                 emptyLabel2,
                 btnBeginConvertation,
                 emptyLabel3,
@@ -219,7 +235,7 @@ public class FileBytesSplitterApp extends Application {
         StackPane root = new StackPane();
         root.getChildren().add(vBox);
 
-        Scene scene = new Scene(root, 600, 600);
+        Scene scene = new Scene(root, 600, 650);
 
         primaryStage.setTitle(Constants.APPLICATION_TITLE);
         primaryStage.setScene(scene);
@@ -229,4 +245,4 @@ public class FileBytesSplitterApp extends Application {
         });
         primaryStage.show();
     }
-}
+    }

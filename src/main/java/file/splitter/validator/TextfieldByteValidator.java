@@ -1,7 +1,7 @@
-package searcher.validator;
+package file.splitter.validator;
 
 
-import searcher.dict.Constants;
+import file.splitter.dict.Constants;
 
 import java.util.List;
 

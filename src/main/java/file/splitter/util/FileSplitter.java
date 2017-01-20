@@ -1,9 +1,9 @@
-package searcher.util;
+package file.splitter.util;
 
+import file.splitter.application.FileBytesSplitterApp;
+import file.splitter.dict.Constants;
+import file.splitter.validator.FileValidator;
 import javafx.application.Platform;
-import searcher.application.FileBytesSplitterApp;
-import searcher.dict.Constants;
-import searcher.validator.FileValidator;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -22,6 +22,9 @@ public class FileSplitter {
         List<Long> resultIndexes = new ArrayList<>(resultsMap.keySet());
         int fileCounter = 0;
         for (int index = 0; index < resultIndexes.size(); index++) {
+            Platform.runLater(() -> {
+                FileBytesSplitterApp.loggerTextArea.appendText(Constants.LOGGER_FILE_SPLIT_PART);
+            });
             try {
                 if (FileBytesSplitterApp.interrupted) {
                     break;
@@ -118,9 +121,6 @@ public class FileSplitter {
         } else {
             fileParts = new byte[][]{new byte[(int) length]};
         }
-        Platform.runLater(() -> {
-            FileBytesSplitterApp.loggerTextArea.appendText(Constants.LOGGER_FILE_SPLIT_PART);
-        });
         for (byte[] array : fileParts) {
             int val = raf.read(array);
             if (val != -1) {

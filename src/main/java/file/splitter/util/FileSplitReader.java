@@ -1,9 +1,9 @@
-package searcher.util;
+package file.splitter.util;
 
 
+import file.splitter.application.FileBytesSplitterApp;
+import file.splitter.dict.Constants;
 import javafx.application.Platform;
-import searcher.application.FileBytesSplitterApp;
-import searcher.dict.Constants;
 
 import java.io.File;
 import java.io.IOException;

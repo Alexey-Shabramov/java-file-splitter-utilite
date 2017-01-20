@@ -1,4 +1,4 @@
-package searcher.util;
+package file.splitter.util;
 
 
 import javax.xml.bind.DatatypeConverter;

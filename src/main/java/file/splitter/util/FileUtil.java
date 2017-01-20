@@ -1,7 +1,7 @@
-package searcher.util;
+package file.splitter.util;
 
 
-import searcher.dict.Constants;
+import file.splitter.dict.Constants;
 
 import java.io.File;
 import java.io.IOException;

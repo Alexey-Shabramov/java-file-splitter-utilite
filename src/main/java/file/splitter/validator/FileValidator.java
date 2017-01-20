@@ -1,4 +1,4 @@
-package searcher.validator;
+package file.splitter.validator;
 
 
 import java.util.Arrays;

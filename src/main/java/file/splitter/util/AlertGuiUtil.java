@@ -1,7 +1,7 @@
-package searcher.util;
+package file.splitter.util;
 
+import file.splitter.dict.Constants;
 import javafx.scene.control.Alert;
-import searcher.dict.Constants;
 
 import java.util.List;
 

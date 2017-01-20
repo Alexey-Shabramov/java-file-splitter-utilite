@@ -1,4 +1,4 @@
-package searcher.dict;
+package file.splitter.dict;
 
 
 public class Constants {
@@ -23,8 +23,10 @@ public class Constants {
     public static final String LOGGER_OUTPUT_IS_TO_BIG = "\n Количество найденных совпадений слишком большое для вывода в консоль. " +
             "\n Проверьте файл с результатами в папке указанной вами ранее. " +
             "\n Количество найденных елементов = ";
+    public static final String LOGGER_SAVE_RESULT = "\n Результаты проверки сохранены в файл. Найдено - ";
+
     public static final String LOGGER_FOUNDED_VALUES_COUNT = "\n Количество найденных совпадений - ";
-    public static final String LOGGER_CHECK_IS_OVER = "\n Проверка завершена.";
+    public static final String LOGGER_SEARCH_IS_OVER = "\n Поиск завершен.";
     public static final String LOGGER_SPLITTING_IS_OVER = "\n Разделение файла завершено.";
     public static final String LOGGER_NO_EQUALITY_FOUND = "\n Совпадений не выявлено.";
     public static final String LOGGER_FILE_CHECK_BEGIN = "\n Начинается анализ выбранного файла.";
@@ -39,4 +41,5 @@ public class Constants {
     public static final String INDEX_OF_THE_END = "  Последний индекс - ";
     public static final String CHECK_BOX_STRICT_INPUT = "Использовать 16-тиричное(hex) представление";
     public static final String CHECK_BOX_STRICT_INCORRECT_LENGTH = "Неверное колличество введенных значений. При строгом вводе строка байтов должна быть четной. Каждый байт имеет 2 символа.)";
+    public static final String CHECK_BOX_SPLIT = "Производить разделение файлов после поиска";
 }
